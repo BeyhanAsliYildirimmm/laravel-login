@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width,user-scalable=no,initial-scale=1.0,maximum-scale=1.0,minimum-scale = 1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie-edge">
+    <title>Document</title>
+    <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./assets/css/style.css">
+    <link rel="stylesheet" href="./node_modules/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="./node_modules/sweetalert2/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="./assets/css/login.css">
+
+</head>
+
+
+<body class="text-center">
+    <form class="form-signin">
+        <h1 class="h3 mb-3 font-weight-normal">Lütfen Giriş Yapın</h1>
+        <label for="event" class="sr-only">E-mail Adresi</label>
+        <input type="email" id="email" class="form-control" placeholder="Lütfen E-mail Adresinizi Yazınız."  autofocus>
+        <label for="password" class="sr-only">Şifre</label>
+        <input type="password" id="password" class="form-control" placeholder="Lütfen Parolanızı Yazınız." >
+        
+        <!--Google reCAPTCHA, insan kullanıcıları botlardan ayırarak,
+             web sitelerini spam ve kötüye kullanımdan koruyan ücretsiz,
+             Google tarafından geliştirilmiş bir hizmettir
+            WEB SİTELERİNDE BULUNAN BEN ROBOT DEĞİLİM KISMINI EKLİYORUZ
+            -->
+        <div class="form-floating">
+            <div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div>
+        </div>
+        
+        <button class="btn btn-lg btn-primary btn-block" type="button" id="btnSingIn">Giriş Yap</button>
+        <p class="mt-5 mb-3 text-muted">&copy; 2017-2018</p>
+    </form>
+
+
+    <script src="./node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="./node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="./node_modules/sweetalert2/dist/sweetalert2.all.min.js"></script>
+    <script src="./assets/script/script.js"></script>
+    <script src="./assets/script/custom.js"></script>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+<script>
+
+    $(document).ready(function () {
+
+        (function () {
+            let token = localStorage.getItem("token");
+
+           
+        })()
+
+            $("#btnSingIn").click(function (event) {
+
+                event.preventDefault();
+                let email = $("#email").val().trim();
+                let password = $("#password").val().trim();
+               //button'a 1 kere tıklanınca tıklanma özelliğini kapattık
+               $("#btnSingIn").attr("disabled",true);
+
+
+                //emailControl() true veta false döner.
+                if (!emailControl(email) || email == null || email =="" ) {
+                   warningObject.text = "Geçerli bir email adresi yazın!"
+                   Swal.fire(warningObject);
+                   $("#btnSingIn").attr("disabled",false);
+
+                }
+                else if (password == null || password == "") {
+                    warningObject.text = "Lütfen Parolanızı Giriniz!"
+                   Swal.fire(warningObject);
+                   $("#btnSingIn").attr("disabled",false);
+
+                }
+
+                //BEN ROBOT DEĞİLİM KISMINI KONTROL EDİCEZ
+                //if içindeki koşul cevap alamamışsa anlamına gelir.
+                else if (grecaptcha.getResponse().length<1) {
+                    warningObject.text = "Ben Robot Değilim Kutusunu İşaretleyiniz!"
+                   Swal.fire(warningObject);
+                   $("#btnSingIn").attr("disabled",false);
+
+                }
+
+
+                else{
+                    //ajax isteği atıyoruz ve login olamak istiyoruz.
+                    // async : false ---> asekron olarak çalışmamasını belirten kod
+                    //Kullanıcı adı ve parola hatalı ise 401 hatası alınmalıdır.
+                    //500 sunucu hatası
+                    /*
+                    email = sercan@juvenis.com.tr
+                    şifre = 12345678
+
+
+                    login olduktan sonra backend tarafı bize token verir.
+                    ve biz bu token tutarız ve daha sonra atacağımız isteklerde bu token'ı göndeririz beraberinde 
+                    backend bu token'ı kontrol eder ve bize içerde başka işlrm yapmamıza izin verir
+
+                    api bize o yüzden token veriyor yapacağımız diğeri işlemerde bu token sayesinde izin veriyor
+                    */
+                    $.ajax({
+                        method : "POST",
+                        url : url + loginRoute,
+                        data : {
+                            email : email,
+                            password : password
+                        },
+                        async : false,
+                        dataType : 'json',
+                        success: function(response){
+
+                            let token = response.success.token;
+                            //birde bu tokenlerin geçerlilik süreleri olur sadece o süre içinde işlem yapılabilir
+                            let nowDate= new Date();
+                            //localStorage  token ve newDate yazıyoruz
+                            localStorage.setItem("token",token);
+                            localStorage.setItem("lastLoginDate",JSON.stringify(nowDate));
+                            console.log(localStorage);
+                            window.location.href="index.html";
+                      },
+                      error: function(response){
+                        if(response.status == 401){
+                            warningObject.icon = "error!;"
+                            warningObject.text = "Kullanıcı Girişi Yapamadınız!"
+                            Swal.fire(warningObject);    
+                        }
+                        $("#btnSingIn").attr("disabled",false);
+                      }
+                    })
+                   
+                    // .done(function(response,status){
+                    //     token = response.success.token;
+                    //    console.log(token);
+                    // })
+                }
+
+            });
+
+        });
+ 
+   </script>
+
+</body>
+
+</html>
